@@ -1,0 +1,30 @@
+{
+  "name": "code-teacher-discord-bot",
+  "version": "0.0.1",
+  "description": "De officiële discord bot voor Code Teacher",
+  "main": "index.js",
+  "dependencies": {
+    "bad-words": "^1.5.1",
+    "discordie": "^0.11.0",
+    "express": "^4.15.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sigfriedseldeslachts/Code-Teacher-Discord-Bot.git"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "code teacher"
+  ],
+  "author": "Sigfried Seldeslachts",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/sigfriedseldeslachts/Code-Teacher-Discord-Bot/issues"
+  },
+  "homepage": "https://github.com/sigfriedseldeslachts/Code-Teacher-Discord-Bot#readme"
+}
