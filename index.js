@@ -3,6 +3,14 @@ const app = express()
 const Discordie = require('discordie')
 const Filter = require('bad-words')
 
+app.get('/', function (request, response) {
+    response.send('')
+})
+
+app.listen(process.env.PORT || 3000, function () {
+    console.log('Listening')
+})
+
 const client = new Discordie({
     autoReconnect: true,
 })
