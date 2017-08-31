@@ -3,6 +3,7 @@ const Filter = require('bad-words')
 const axios = require('axios')
 const schedule = require('node-schedule')
 const fs = require('fs')
+const moment = require('moment')
 require('dotenv').config()
 
 const client = new Discordie({
@@ -13,8 +14,13 @@ const wordFilter = new Filter({
     placeHolder: '*',
 })
 
-wordFilter.removeWords('hoor')
-wordFilter.addWords(['kut', 'lul', 'hoer', 'kankerkind', 'kanker kind', 'mongool']);
+const acceptedWords = ['hoor', 'lust']
+acceptedWords.forEach((word) => {
+    wordFilter.removeWords(word)
+})
+wordFilter.addWords(['kut', 'flikker', 'homo', 'gay', 'loser', 'teringlijer', 'fuck', 'shit', 'godverdomme', 'neuken', 'hoer', 'kakker', 'kanker',
+                    'lul', 'hoerenzoon', 'kutkind', 'neger', 'kankerkind', 'kanker', 'zelfmoord', 'kutmens', 'tering', 'penis', 'mothefucker',
+                    'fucker', 'vagina', 'nazi', 'hitler', 'terroristen', 'doemaargamen', 'ISS', 's3x', 'p0rnhub'])
 
 client.connect({
     token: process.env.DiscordToken,
@@ -25,16 +31,26 @@ client.Dispatcher.on('GATEWAY_READY', (event) => {
 
     client.User.setStatus('online', {name: 'Filmpjes aan het kijken'})
 
-    const morningMessage = schedule.scheduleJob('00 30 7 * * *', () => {
+    const morningMessage = schedule.scheduleJob('0 30 7 * * *', () => {
         const mainChatChannel = client.Channels.get(process.env.mainChatChannelId)
 
         mainChatChannel.sendMessage('Goede morgen iedereen!')
+    })
+
+    const eveningMessage = schedule.scheduleJob('0 0 18 * * *', () => {
+        const mainChatChannel = client.Channels.get(process.env.mainChatChannelId)
+
+        mainChatChannel.sendMessage(['Het is 18u00, de dag is bijna om. Werk je laatste bugs nog snel af.'])
     })
 })
 
 let randomItemObject = (obj) => {
     let keys = Object.keys(obj)
     return obj[keys[ keys.length * Math.random() << 0]];
+}
+
+const deleteMessage = (message) => {
+    client.Messages.deleteMessage(message.id, message.channel_id)
 }
 
 client.Dispatcher.on('MESSAGE_CREATE', (event) => {
@@ -75,7 +91,20 @@ client.Dispatcher.on('MESSAGE_CREATE', (event) => {
          */
         if (typeof guildUser !== 'undefined' && guildUser.hasRole(process.env.modRoleId)) {
             if (msgText == '!doubt') {
+                client.Messages.deleteMessage(message.id, message.channel_id)
                 message.channel.uploadFile(fs.readFileSync('images/doubtImage.jpg'), null, message.author.mention + ' betwijfelt dat.')
+            }
+
+            if (msgText == '!datum') {
+                const days = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag']
+                const date = new Date()
+                message.channel.sendMessage('Het is ' + days[date.getDay()])
+            }
+
+            if (msgText == '!cry') {
+                deleteMessage(message)
+                message.channel.sendMessage([message.author.mention + ' is niet blij. :cry:',
+                                            'https://media.giphy.com/media/l2R0corOGwFTlKZjO/giphy.gif']) 
             }
         }
 
@@ -87,6 +116,8 @@ client.Dispatcher.on('MESSAGE_CREATE', (event) => {
             }).catch((res) => {
                 message.channel.sendMessage('Ja')
             })
+
+            client.Messages.deleteMessage(message.id, message.channel_id)
         }
 
         if (msgText == '!nee') {
@@ -97,6 +128,8 @@ client.Dispatcher.on('MESSAGE_CREATE', (event) => {
             }).catch((res) => {
                 message.channel.sendMessage('Nee')
             })
+
+            client.Messages.deleteMessage(message.id, message.channel_id)
         }
 
         if (message.channel_id == process.env.chatboxChannelId) {
@@ -229,6 +262,7 @@ client.Dispatcher.on('GUILD_MEMBER_ADD', (event) => {
 process.on('SIGINT', () => {
     console.log('Interrupt signal caught.')
 
+    client.Channels.get(process.env.mainChatChannelId).sendMessage('Bot offline...')
     client.disconnect()
     console.log('Disconnected from Discord')
 
