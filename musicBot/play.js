@@ -23,7 +23,7 @@ const playMusic = (voiceChannel, track) => {
                 fetchVideoInfo(track.url, (error, videoInfo) => {
                     if (!error) {
                         channel.send([
-                            'Nu aan het spelen',
+                            'Nu aan het spelen:',
                             videoInfo.title
                         ])
                     }

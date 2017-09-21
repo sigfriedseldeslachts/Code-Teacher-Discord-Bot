@@ -13,11 +13,7 @@ const addToList = (url, user) => {
 }
 
 const removeFirstTrack = () => {
-    let index = musicList.indexOf(0)
-
-    musicList = musicList.splice(index)
-
-    console.log(musicList)
+    musicList = musicList.splice(1)
 
     return true
 }
