@@ -1,270 +1,57 @@
-const Discordie = require('discordie')
-const Filter = require('bad-words')
+const Discord = require('discord.js')
 const axios = require('axios')
 const schedule = require('node-schedule')
 const fs = require('fs')
 const moment = require('moment')
-require('dotenv').config()
+const dotenv = require('dotenv').config()
+const dontenvExpanded = require('dotenv-expand')
+const env = dontenvExpanded(dotenv).parsed
 
-const client = new Discordie({
-    autoReconnect: true,
-})
+/**
+ * Import other files
+ */
+const { client } = require('./base/connection.js')
+const { playMusic } = require('./musicBot/play.js')
 
-const wordFilter = new Filter({
-    placeHolder: '*',
-})
-
-const acceptedWords = ['hoor', 'lust']
-acceptedWords.forEach((word) => {
-    wordFilter.removeWords(word)
-})
-wordFilter.addWords(['kut', 'flikker', 'homo', 'gay', 'loser', 'teringlijer', 'fuck', 'shit', 'godverdomme', 'neuken', 'hoer', 'kakker', 'kanker',
-                    'lul', 'hoerenzoon', 'kutkind', 'neger', 'kankerkind', 'kanker', 'zelfmoord', 'kutmens', 'tering', 'penis', 'mothefucker',
-                    'fucker', 'vagina', 'nazi', 'hitler', 'terroristen', 'doemaargamen', 'ISS', 's3x', 'p0rnhub'])
-
-client.connect({
-    token: process.env.DiscordToken,
-})
-
-client.Dispatcher.on('GATEWAY_READY', (event) => {
-    console.log('Connected as: ' + client.User.username)
-
-    client.User.setStatus('online', {name: 'Filmpjes aan het kijken'})
+client.on('ready', (event) => {
+    console.log('Connected as: ' + client.user.username)
 
     const morningMessage = schedule.scheduleJob('0 30 7 * * *', () => {
-        const mainChatChannel = client.Channels.get(process.env.mainChatChannelId)
+        const channel = client.channels.find('name', 'main_chat')
 
-        mainChatChannel.sendMessage('Goede morgen iedereen!')
+        channel.send('Goede morgen iedereen!')
     })
 
     const eveningMessage = schedule.scheduleJob('0 0 18 * * *', () => {
-        const mainChatChannel = client.Channels.get(process.env.mainChatChannelId)
+        const channel = client.channels.find('name', 'main_chat')
 
-        mainChatChannel.sendMessage(['Het is 18u00, de dag is bijna om. Werk je laatste bugs nog snel af.'])
+        channel.send(['De dag is bijna om. Werk je laatste bugs nog snel af.'])
     })
+
+    playMusic()
 })
 
-let randomItemObject = (obj) => {
-    let keys = Object.keys(obj)
-    return obj[keys[ keys.length * Math.random() << 0]];
-}
+client.on('message', (message) => {
+    const { commands } = require('./base/commands.js')
+    const { musicBotCommands } = require('./musicBot/commands.js')
 
-const deleteMessage = (message) => {
-    client.Messages.deleteMessage(message.id, message.channel_id)
-}
+    commands(message)
+    musicBotCommands(message)
+})
 
-client.Dispatcher.on('MESSAGE_CREATE', (event) => {
-    const message = event.message
-    let guildUser
+client.on('guildMemberAdd', (member) => {
+    const channel = member.guild.channels.find('name', 'main_chat')
 
-    client.Guilds.get(process.env.guildId).members.forEach((guildUserAPI) => {
-        if (guildUserAPI.id == message.author.id) {
-            guildUser = guildUserAPI
-        }
-    })
-    
-    /**
-     * Wordt alleen uitgevoerd als het bericht niet van de bot is.
-     */
-    if (!message.author.bot) {
-        let msgText = message.content
-
-        /**
-         * Kijkt of een bericht geen vuile woorden bevat. Zo ja wordt het bericht verwijderd
-         */
-        if (msgText !== wordFilter.clean(msgText)) {
-            client.Messages.deleteMessage(message.id, message.channel_id)
-            console.log('Message ' + message.id + ' deleted')
-            message.channel.sendMessage(message.author.mention + ', let op je woorden! Je bericht is verwijderd')
-        }
-
-        /**
-         * Toont het uploadschema van Code Teacher
-         */
-        if (msgText == "!uploadschema") {
-            message.channel.sendMessage('Message info logged to console')
-            message.channel.sendMessage(message.author.mention + ', Code Teacher uploadt dinsdag, donderdag en zaterdag. Telkens om 16u00')
-        }
-
-        /**
-         * Deze commando's kunnen alleen uitgevoerd worden door moderators
-         */
-        if (typeof guildUser !== 'undefined' && guildUser.hasRole(process.env.modRoleId)) {
-            if (msgText == '!doubt') {
-                client.Messages.deleteMessage(message.id, message.channel_id)
-                message.channel.uploadFile(fs.readFileSync('images/doubtImage.jpg'), null, message.author.mention + ' betwijfelt dat.')
-            }
-
-            if (msgText == '!datum') {
-                const days = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag']
-                const date = new Date()
-                message.channel.sendMessage('Het is ' + days[date.getDay()])
-            }
-
-            if (msgText == '!cry') {
-                deleteMessage(message)
-                message.channel.sendMessage([message.author.mention + ' is niet blij. :cry:',
-                                            'https://media.giphy.com/media/l2R0corOGwFTlKZjO/giphy.gif']) 
-            }
-        }
-
-        if (msgText == '!ja') {
-            axios.get('https://yesno.wtf/api', {
-                force: 'yes'
-            }).then((res) => {
-                message.channel.sendMessage(['Ja', res.data.image])
-            }).catch((res) => {
-                message.channel.sendMessage('Ja')
-            })
-
-            client.Messages.deleteMessage(message.id, message.channel_id)
-        }
-
-        if (msgText == '!nee') {
-            axios.get('https://yesno.wtf/api', {
-                force: 'no'
-            }).then((res) => {
-                message.channel.sendMessage(['Nee', res.data.image])
-            }).catch((res) => {
-                message.channel.sendMessage('Nee')
-            })
-
-            client.Messages.deleteMessage(message.id, message.channel_id)
-        }
-
-        if (message.channel_id == process.env.chatboxChannelId) {
-            /**
-             * Laat een random quote zien
-             */
-            if (msgText == '!quote') {
-                axios.post('https://api.forismatic.com/api/1.0/?method=getQuote&format=text&lang=en')
-                    .then((response) => {
-                        message.channel.sendMessage(response.data)
-                    }).catch((response) => {
-                        message.channel.sendMessage('Oeps! Laden van een quote mislukt.')
-                    })
-            }
-                
-            /**
-             * Laat een random grap zien
-             */
-            if (msgText == '!grap') {
-                axios.get('https://icanhazdadjoke.com/', {
-                    headers: {'Accept': 'application/json'}
-                }).then((response) => {
-                    message.channel.sendMessage(response.data.joke)
-                }).catch((response) => {
-                    message.channel.sendMessage('Oeps! Laden van een grap mislukt.')
-                })
-            }
-
-            /**
-             * Toont een meme
-             */
-            if (msgText == '!meme') {
-                axios.get('https://api.imgflip.com/get_memes')
-                    .then((response) => {
-                        console.log(response)
-                        let data = randomItemObject(response.data.data.memes)
-                        message.channel.sendMessage([data.name, data.url])
-                    }).catch((response) => {
-                        console.log(response)
-                        message.channel.sendMessage('Oeps! Laden van een meme mislukt.')
-                    })
-            }
-
-            /**
-             * Antwoordt random ja of nee
-             */
-            if (msgText.substring(0, 8) == '!jaofnee') {
-                let messageLwrCase = msgText.substring(6).replace(/\s+/g,' ').trim().toLowerCase();
-
-                if (msgText.indexOf('?') <= -1 || msgText == '!jaofnee') {
-                message.channel.sendMessage(message.author.mention + ', dat lijkt geen vraag te zijn. Gebruik een ? op het einde.')
-                } /*else if (jquery.inArray(messageLwrCase, ['is codeteacher slecht?', 'is code teacher slecht?',
-                    'sterf?', 'code teacher is slecht'])) {
-                    message.channel.sendMessage('Ik kan niet antwoorden op die vraag.')
-                    }*/ else {
-                    switch (messageLwrCase) {
-                        case 'wat is jouw naam?':
-                            response = 'Cody'
-                            break;
-                        case 'Ben ik cool?':
-                            response = "Cool alert!"
-                            break;
-                        case 'knock knock?':
-                            response = ["Who's there?", "The door!"]
-                            break;
-                        case 'ben jij slecht?':
-                            response = 'Ik ben beter als jouw!'
-                            break;
-                        case 'wie heeft jouw gemaakt?':
-                            response = 'Sigfried'
-                            break;
-                        default:
-                            axios.get('https://yesno.wtf/api')
-                                .then((res) => {
-                                    if (res.data.answer.toLowerCase() == "yes") { answer = 'Ja' } else { answer = 'Nee'}
-                                    message.channel.sendMessage([answer, res.data.image])
-                                }).catch((res) => {
-                                    message.channel.sendMessage('Geen idee')
-                                })
-                    }
-
-                    if (typeof response !== 'undefined') {
-                        message.channel.sendMessage(response)
-                    }
-                }
-            }
-
-            if (msgText == '!kat') {
-                axios.get('http://random.cat/meow')
-                    .then((response) => {
-                        message.channel.sendMessage(response.data.file)
-                    }).catch((response) => {
-                        message.channel.sendMessage('Kon geen cat foto sturen.')
-                    })
-            }
-
-            /**
-             * Stuurt een random Be Like Bill foto
-             */
-            if (msgText == '!bill') {
-                message.channel.sendMessage('http://belikebill.azurewebsites.net/billgen-API.php?default=1&sex=m' )
-            }
-
-        }
-
-        /**
-         * Toont het help bericht
-         */
-        if (msgText == '!help') {
-            message.channel.sendMessage([
-                message.author.mention + ", gebruik de volgende commando's",
-                '- !help  => toont deze informatie',
-                '- !uploadschema  => toont het uploadschema van Code Teacher',
-                'De volgende items werken alleen in #chatbox',
-                '- !quote  => toont een random quote',
-                '- !grap  => toont een grap',
-                '- !jaofnee  => antwoordt ja, nee of misschien',
-                '- !kat  => stuurt een foto van een kat',
-                "- !bill  => stuurt een 'Be like Bill' foto",
-                'En er komen er nog meer! :)'
-            ])
-        }
+    if (channel) {
+        channel.send(`Welkom ${member} op de Discord server van Code Teacher!`)
     }
-})
 
-client.Dispatcher.on('GUILD_MEMBER_ADD', (event) => {
-
+    return
 })
 
 process.on('SIGINT', () => {
+    client.destroy()
+
     console.log('Interrupt signal caught.')
-
-    client.Channels.get(process.env.mainChatChannelId).sendMessage('Bot offline...')
-    client.disconnect()
-    console.log('Disconnected from Discord')
-
     process.exit()
 })
