@@ -6,7 +6,6 @@ const dontenvExpanded = require('dotenv-expand')
 const env = dontenvExpanded(dotenv).parsed
 
 const { client } = require('./connection.js')
-const { wordFilter } = require('./wordFilter.js')
 const { playMusic } = require('../musicBot/play.js')
 const { isMod } = require('./isMod.js')
 
@@ -17,13 +16,13 @@ const commands = (message) => {
     /**
      * Kijkt of een bericht geen vuile woorden bevat. Zo ja wordt het bericht verwijderd
      */
-    if (msgText !== wordFilter.clean(msgText) && message.author.id !== client.user.id) {
+    if (/cancer|kanker|ebola|niger|nigger|nigga|nigah|neger|aids|nibba|kut|flikker|homo|gay|loser|teringlijer|fuck|shit|godverdomme|neuken|hoer|kakker|kanker|lul|hoerenzoon|kutkind|neger|kankerkind|kanker|zelfmoord|kutmens|tering|penis|mothefucker|fucker|vagina|nazi|hitler|terroristen|doemaargamen|isis|s3x|p0rnhub|pornhub|youporn/g.test(msgText.toLowerCase()) && message.author.id !== client.user.id) {
         message.delete()
             .then((msg) => {
                 console.log(`Deleted message from ${msg.author}`)
-            })
 
-        message.reply('let op je woorden! Bericht verwijderd')
+                message.reply('let op je woorden! Bericht verwijderd')
+            })
     }
 
     /**
@@ -109,13 +108,13 @@ const commands = (message) => {
                 })
         }
 
-        /**
-         * Stuurt een random Be Like Bill foto
-         */
-        if (msgText == '!bill') {
-            message.channel.send('http://belikebill.azurewebsites.net/billgen-API.php?default=1&sex=m' )
+        if (msgText == '!info') {
+            message.channel.send([
+                'Bot gemaakt door <@309733619864436736>',
+                'Word Filter RegEx door <@260107579366047744>',
+                'Code kan je bekijken op https://github.com/sigfriedseldeslachts/Code-Teacher-Discord-Bot'
+            ])
         }
-
     }
 
     /**
@@ -125,13 +124,13 @@ const commands = (message) => {
         message.reply([
             "gebruik de volgende commando's",
             '- !help  => toont deze informatie',
-            '- !uploadschema  => toont het uploadschema van Code Teacher',
+            //'- !uploadschema  => toont het uploadschema van Code Teacher',
             'De volgende items werken alleen in #chatbox',
             '- !quote  => toont een random quote',
             '- !grap  => toont een grap',
             '- !jaofnee  => antwoordt ja, nee of misschien',
             '- !kat  => stuurt een foto van een kat',
-            "- !bill  => stuurt een 'Be like Bill' foto",
+            "- !info => geeft wat van die domme informatie",
             'En er komen er nog meer! :)'
         ])
     }

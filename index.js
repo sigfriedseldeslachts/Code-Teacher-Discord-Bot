@@ -27,7 +27,7 @@ client.on('ready', (event) => {
 
         channel.send(['De dag is bijna om. Werk je laatste bugs nog snel af.'])
     })
-
+    
     playMusic()
 })
 

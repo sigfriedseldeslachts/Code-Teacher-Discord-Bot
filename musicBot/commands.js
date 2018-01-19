@@ -10,6 +10,10 @@ const musicBotCommands = (message) => {
     if (message) {
         const msgText = message.content
 
+        if (msgText == "!start") {
+            const channel = client.channels.find('name', 'general')
+        }
+
         /**
          * Mods-only commando's
          */
