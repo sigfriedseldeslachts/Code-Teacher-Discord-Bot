@@ -87,7 +87,7 @@ const commands = (message) => {
             let messageLwrCase = msgText.substring(6).replace(/\s+/g,' ').trim().toLowerCase();
 
             if (msgText.indexOf('?') <= -1 || msgText == '!jaofnee') {
-            message.channel.send(message.author.mention + ', dat lijkt geen vraag te zijn. Gebruik een ? op het einde.')
+                message.reply(', dat lijkt geen vraag te zijn. Gebruik een ? op het einde.')
             } else {
                 axios.get('https://yesno.wtf/api')
                     .then((res) => {
